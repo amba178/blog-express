@@ -14,16 +14,17 @@
   "dependencies": {
     "body-parser": "1.18.2",
     "cookie-parser": "1.4.3",
+    "dotenv": "4.0.0",
     "errorhandler": "1.5.0",
     "express": "4.1.2",
-    "pug": "2.0.0-rc.4",
-    "stylus": "0.54.5",
     "express-session": "1.15.6",
     "method-override": "2.3.10",
     "mongodb": "2.2.33",
     "mongoskin": "2.1.0",
     "morgan": "1.9.0",
-    "serve-favicon": "2.4.5"
+    "pug": "2.0.0-rc.4",
+    "serve-favicon": "2.4.5",
+    "stylus": "0.54.5"
   },
   "devDependencies": {
     "expect.js": "0.2.0",

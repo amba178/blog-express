@@ -4,3 +4,4 @@
 .DS_Store?
 ._*
 #make test to run makefile
+.env

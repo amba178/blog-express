@@ -2,12 +2,13 @@ const express = require('express')
 const http = require('http')
 const path = require('path')
 const app = express()
+require('dotenv').config()
 const routes =require('./routes')
 const server = http.createServer(app)
 
 const mongoskin = require('mongoskin')
 const dbUrl = process.env.MONGOHQ_URL || 'mongodb://@localhost:27017/blog'
-const db = mongoskin.db(dbUrl)
+const db = mongoskin.db(dbUrl, {safe: true})
 
 
 
@@ -22,6 +23,8 @@ const logger = require('morgan')
 const errorHandler = require('errorhandler')
 const bodyParser = require('body-parser')
 const methodOverride = require('method-override')
+const session = require('express-session')
+const cookieParser = require('cookie-parser')
 
 //Expose collection to requrest handlers
 app.use((req, res, next) =>{
@@ -50,6 +53,25 @@ app.use(bodyParser.urlencoded({extended: true}))
 app.use(methodOverride())
 app.use(require('stylus').middleware(path.join(__dirname, 'public')))
 app.use(express.static(path.join(__dirname, 'public')))
+app.use(cookieParser(process.env.COOKIE))
+app.use(session({secret: process.env.SESSION, 
+	             resave: true, 
+	             saveUninitialized: true}))
+//Authentication middleware
+app.use((req, res, next) => {
+	if(req.session && req.session.admin){
+		res.locals.admin = true
+	}
+	next()
+})
+//authorization 
+let authorize = (req, res, next)=>{
+	if(req.session && req.session.admin)
+		return next()
+	else
+		return res.send(401)
+}
+
 
 //development only 
 if(app.get('env')==='development'){
@@ -60,14 +82,15 @@ if(app.get('env')==='development'){
 app.get('/', routes.index)
 app.get('/login',  routes.user.login)
 app.post('/login', routes.user.authenticate)
-app.get('/post',   routes.article.post)
-app.post('/post',  routes.article.postArticle)
+app.get('/admin',  authorize, routes.article.admin)
+app.get('/post',   authorize, routes.article.post)
+app.post('/post',  authorize, routes.article.postArticle)
 app.get('/logout', routes.user.logout)
-app.get('/admin',  routes.article.admin)
 app.get('/articles/:slug', routes.article.show)
 
 
 // REST API routes
+app.all('/api', authorize)
 app.get('/api/articles', routes.article.list)
 app.post('/api/articles', routes.article.add)
 app.put('/api/articles/:id', routes.article.edit)
