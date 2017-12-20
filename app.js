@@ -1,6 +1,11 @@
 const express = require('express')
 const http = require('http')
 const path = require('path')
+const OAuth = require('OAuth')
+const OAuth2 = OAuth.OAuth2
+const twitterConsumerKey = process.env.TWITTER_KEY
+const twitterConsumerSecret = process.env.TWITTER_SECRET
+const everyauth = require('everyauth')
 const app = express()
 require('dotenv').config()
 const routes =require('./routes')
@@ -17,6 +22,32 @@ const collections = {
   users: db.collection('users')
 }
 
+everyauth.debug = true 
+everyauth.twitter 
+	.consumerKey('eAdHRhgWzjgl72WYvqP3EL3d3')
+	.consumerSecret('AFmUWsYV9hlw983xVofwsBRBu9SEczLMKMLlOkRGPxkiSeZugg')
+	.findOrCreateUser(function(session, accessToken, accessTokenSecret,twitterUserMetadata){
+		let promise = this.Promise()
+		process.nextTick(()=>{
+			if (twitterUserMetadata.screen_name === 'salemA6') {
+          			session.user = twitterUserMetadata;
+         			session.admin = true;
+       		 }
+       		 promise.fulfill(twitterUserMetadata)
+		})
+		return promise
+	}).redirectPath('/admin')
+
+//we need it because otherwise the session will be kept alive
+//the Express.js request is intercepted by Everyauth automatically added /logout
+//and never makes it to our /logout
+everyauth.everymodule.handleLogout(routes.user.logout)
+
+everyauth.everymodule.findUserById((user, callback) => {
+  callback(user)
+})
+
+
 // const cookieParser = require('cookie-parser')
 // const session = require('express-session')
 const logger = require('morgan')
@@ -25,6 +56,7 @@ const bodyParser = require('body-parser')
 const methodOverride = require('method-override')
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
+
 
 //Expose collection to requrest handlers
 app.use((req, res, next) =>{
@@ -50,13 +82,14 @@ app.locals.appTitle = 'blog-express'
 app.use(logger('dev'))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}))
+app.use(cookieParser('1d40ab00b6f0fc63462'))
+app.use(session({secret: 'a6c98384a2fe2cea'}))
+app.use(everyauth.middleware())
 app.use(methodOverride())
 app.use(require('stylus').middleware(path.join(__dirname, 'public')))
 app.use(express.static(path.join(__dirname, 'public')))
-app.use(cookieParser(process.env.COOKIE))
-app.use(session({secret: process.env.SESSION, 
-	             resave: true, 
-	             saveUninitialized: true}))
+
+
 //Authentication middleware
 app.use((req, res, next) => {
 	if(req.session && req.session.admin){

@@ -9,5 +9,9 @@ test:
 	$(MOCHA_OPTS) \
 	tests/*.js
 	echo Ending test
+start:
+	TWITTER_CONSUMER_KEY= eAdHRhgWzjgl72WYvqP3EL3d3 \
+	TWITTER_CONSUMER_SECRET= AFmUWsYV9hlw983xVofwsBRBu9SEczLMKMLlOkRGPxkiSeZugg \
+	node  app
 
 .PHONY: test
