@@ -2,6 +2,7 @@ const express = require('express')
 const http = require('http')
 const path = require('path')
 const OAuth = require('OAuth')
+const models = require('./models')
 const OAuth2 = OAuth.OAuth2
 const twitterConsumerKey = process.env.TWITTER_KEY
 const twitterConsumerSecret = process.env.TWITTER_SECRET
@@ -11,16 +12,16 @@ require('dotenv').config()
 const routes =require('./routes')
 const server = http.createServer(app)
 
-const mongoskin = require('mongoskin')
+const mongoose = require('mongoose')
 const dbUrl = process.env.MONGOHQ_URL || 'mongodb://@localhost:27017/blog'
-const db = mongoskin.db(dbUrl, {safe: true})
+const db = mongoose.connect(dbUrl, {safe: true})
 
 
 
-const collections = {
-  articles: db.collection('articles'),
-  users: db.collection('users')
-}
+// const collections = {
+//   articles: db.collection('articles'),
+//   users: db.collection('users')
+// }
 
 everyauth.debug = true 
 everyauth.twitter 
@@ -58,12 +59,18 @@ const session = require('express-session')
 const cookieParser = require('cookie-parser')
 
 
-//Expose collection to requrest handlers
-app.use((req, res, next) =>{
-	if(!collections.articles || !collections.users) return next(new Error('No collections. '))
-	req.collections = collections 
-	return next()
-})
+// //Expose collection to requrest handlers
+// app.use((req, res, next) =>{
+// 	if(!collections.articles || !collections.users) return next(new Error('No collections. '))
+// 	req.collections = collections 
+// 	return next()
+// })
+
+app.use((req, res, next)=> {
+  if (!models.Article || ! models.User) return next(new Error("No models."))
+  req.models = models;
+  return next();
+});
 
 app.set('port', process.env.PORT || 3000)
 app.set('views', path.join(__dirname, 'views'))
