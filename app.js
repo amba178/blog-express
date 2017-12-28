@@ -1,17 +1,20 @@
+//1-require dependencies
 const express = require('express')
 const http = require('http')
 const path = require('path')
 const OAuth = require('OAuth')
 const models = require('./models')
 const OAuth2 = OAuth.OAuth2
-const twitterConsumerKey = process.env.TWITTER_KEY
-const twitterConsumerSecret = process.env.TWITTER_SECRET
+const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY
+const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET
+const cookieConst = process.env.COOKIE_CONST 
+const sessionConst = process.env.SESSION_CONST 
 const everyauth = require('everyauth')
 const app = express()
-require('dotenv').config()
 const routes =require('./routes')
 const server = http.createServer(app)
 
+//3-connect to database 
 const mongoose = require('mongoose')
 const dbUrl = process.env.MONGOHQ_URL || 'mongodb://@localhost:27017/blog'
 const db = mongoose.connect(dbUrl, {safe: true})
@@ -25,8 +28,8 @@ const db = mongoose.connect(dbUrl, {safe: true})
 
 everyauth.debug = true 
 everyauth.twitter 
-	.consumerKey('eAdHRhgWzjgl72WYvqP3EL3d3')
-	.consumerSecret('AFmUWsYV9hlw983xVofwsBRBu9SEczLMKMLlOkRGPxkiSeZugg')
+	.consumerKey(twitterConsumerKey)
+	.consumerSecret(twitterConsumerSecret)
 	.findOrCreateUser(function(session, accessToken, accessTokenSecret,twitterUserMetadata){
 		let promise = this.Promise()
 		process.nextTick(()=>{
@@ -49,8 +52,7 @@ everyauth.everymodule.findUserById((user, callback) => {
 })
 
 
-// const cookieParser = require('cookie-parser')
-// const session = require('express-session')
+//Define in external modules(third-party)
 const logger = require('morgan')
 const errorHandler = require('errorhandler')
 const bodyParser = require('body-parser')
@@ -66,12 +68,15 @@ const cookieParser = require('cookie-parser')
 // 	return next()
 // })
 
+
+//Defined in the app or its modules such as 
 app.use((req, res, next)=> {
   if (!models.Article || ! models.User) return next(new Error("No models."))
   req.models = models;
   return next();
-});
+})
 
+//2-configure settings 
 app.set('port', process.env.PORT || 3000)
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'pug')
@@ -85,12 +90,12 @@ app.locals.appTitle = 'blog-express'
 // 	console.log('Express server on port ' + app.get('port'))
 // })
 
-//Express.js middleware configuration
+//4- defining middleware 
 app.use(logger('dev'))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}))
-app.use(cookieParser('1d40ab00b6f0fc63462'))
-app.use(session({secret: 'a6c98384a2fe2cea'}))
+app.use(cookieParser(cookieConst))
+app.use(session({secret: sessionConst, resave: true, saveUninitialized: true}))
 app.use(everyauth.middleware())
 app.use(methodOverride())
 app.use(require('stylus').middleware(path.join(__dirname, 'public')))
@@ -100,10 +105,12 @@ app.use(express.static(path.join(__dirname, 'public')))
 //Authentication middleware
 app.use((req, res, next) => {
 	if(req.session && req.session.admin){
+		//Available only to the views
 		res.locals.admin = true
 	}
 	next()
 })
+
 //authorization 
 let authorize = (req, res, next)=>{
 	if(req.session && req.session.admin)
@@ -136,10 +143,19 @@ app.post('/api/articles', routes.article.add)
 app.put('/api/articles/:id', routes.article.edit)
 app.delete('/api/articles/:id', routes.article.del)
 
+// app.render(view, [locals], callback)
+/*app.use('/admin', function(req, res, next) {  // GET 'http://www.example.com/admin/new'
+  console.log(req.originalUrl); // '/admin/new'
+  console.log(req.baseUrl); // '/admin'
+  console.log(req.path); // '/new'
+  next();
+})
+*/
 
 
 app.all('*', (req, res) => {
-  res.status(404).send()
+  res.status(404).send('The does not exist!')
+  // res.status(404).render('error', {msg: 'The does not exist!'} )
 })
 
 

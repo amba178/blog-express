@@ -18,6 +18,23 @@ const articleSchema = new mongoose.Schema({
   }
 });
 
+//example of instance methodd
+
+/* 
+  bookSchema.method({
+  buy: function(quantity, customer, callback){
+    let bookToPurchase = this
+    //create a purchase order and invoice customer
+    return callback(resutls)
+  refund: function(customer, callback){
+    //process the refund
+    return callback(results)
+  }
+  }
+  })
+*/
+
+//static method(class method)
 articleSchema.static({
   list: function(callback){
     this.find({}, null, {sort: {_id:-1}}, callback);

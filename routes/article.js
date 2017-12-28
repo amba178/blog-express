@@ -85,7 +85,7 @@ exports.del = function(req, res, next) {
 
 exports.post = function(req, res, next) {
   if (!req.body.title)
-  res.render('post');
+  res.render('post')
 };
 
 
