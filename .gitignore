@@ -6,3 +6,4 @@
 #make test to run makefile
 .env
 /Makfile
+/rest-express/node_modules

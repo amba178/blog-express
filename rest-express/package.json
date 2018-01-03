@@ -1,0 +1,22 @@
+{
+  "name": "rest-express",
+  "version": "1.0.0",
+  "description": "REST API application with Express, Mongoskin, MongoDB, Mocha and Superagent",
+  "main": "app.js",
+  "scripts": {
+    "test": "mocha test -R spec"
+  },
+  "author": "Salem Amba",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "1.18.2",
+    "express": "4.16.2",
+    "mongoskin": "2.1.0",
+    "morgan": "1.9.0"
+  },
+  "devDependencies": {
+    "expect.js": "0.3.1",
+    "mocha": "4.0.1",
+    "superagent": "3.8.2"
+  }
+}
