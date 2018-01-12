@@ -11,12 +11,14 @@
   "dependencies": {
     "body-parser": "1.18.2",
     "express": "4.16.2",
+    "good": "^7.3.0",
+    "hapi": "^17.2.0",
     "mongoskin": "2.1.0",
     "morgan": "1.9.0"
   },
   "devDependencies": {
     "expect.js": "0.3.1",
-    "mocha": "4.0.1",
+    "mocha": "4.1.0",
     "superagent": "3.8.2"
   }
 }

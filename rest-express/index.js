@@ -1,44 +1,68 @@
-const express = require('express')
-const mongoskin = require('mongoskin')
-const bodyParser = require('body-parser')
-const logger = requie('morgan')
-const app = express()
+const express = require('express'),
+  mongoskin = require('mongoskin'),
+  bodyParser = require('body-parser'),
+  logger = require('morgan'),
+  // hapi = require('hapi')
 
-const db = mongoskin.db('mongoskin://@localhost:27017/test', {safe:true})
-/* to conncet to remote server */
-//mongodb://[username:password@]host1[:port1][,host2[:port2]...][/[database][?options]]
 
-//extract parameters and data from the request 
+// const app = express(),
+// server = hapi.createServer('localhost', 3000)
+
 app.use(bodyParser.urlencoded())
 app.use(bodyParser.json())
+app.use(logger())
 
-//Do something every time there is this value in the URL pattern of the request 
-app.param('collectionName', (req, res, next, collectionName)=>{
-	req.collection = db.collection(collectionName)
-	return next()
+const db = mongoskin.db('mongodb://@localhost:27017/test', {safe:true})
+const id = mongoskin.helper.toObjectID
+
+app.param('collectionName', function(req, res, next, collectionName){
+  req.collection = db.collection(collectionName)
+  return next()
 })
 
-//user friendly, let include a root route with a message that 
-//asks users to specify a collection name in their URL 
-
-
-//next middleware function in the application's
-// request-response cycle
-//middleware functions can perform the following tasks:
-//1Execute any code
-//2make changes the request and the response object
-//3End the request-response cycle
-//4Call the next middleware function the stack
-
-
-app.get('/', (req, res, next)=>{
-	res.send('Select a collection, e.g, /collections/messages')
+app.get('/', function(req, res, next) {
+  res.send('Select a collection, e.g., /collections/messages')
 })
 
-app.get('/collections/:collectionName', (req, res, next)=>{
-	req.collection.find({}, {limit: 10, sort: [['_id', -1]]}).toArray((e, results)=>{
-		if(e)return next(e)
-		res.send(results)
-	})
+app.get('/collections/:collectionName', function(req, res, next) {
+  req.collection.find({}, {limit: 10, sort: [['_id', -1]]})
+    .toArray(function(e, results){
+      if (e) return next(e)
+      res.send(results)
+    }
+  )
 })
 
+app.post('/collections/:collectionName', function(req, res, next) {
+  req.collection.insert(req.body, {}, function(e, results){
+    if (e) return next(e)
+    res.send(results)
+  })
+})
+
+app.get('/collections/:collectionName/:id', function(req, res, next) {
+  req.collection.findOne({_id: id(req.params.id)}, function(e, result){
+    if (e) return next(e)
+    res.send(result)
+  })
+})
+
+app.put('/collections/:collectionName/:id', function(req, res, next) {
+  req.collection.update({_id: id(req.params.id)},
+    {$set: req.body},
+    {safe: true, multi: false}, function(e){
+    if (e) return next(e)
+    res.send((e==null) ? {msg:'success'} : {msg:'error'})
+  })
+})
+
+app.del('/collections/:collectionName/:id', function(req, res, next) {
+  req.collection.remove({_id: id(req.params.id)}, function(e){
+    if (e) return next(e)
+    res.send((e==null) ? {msg:'success'} : {msg:'error'})
+  })
+})
+
+app.listen(3000, function(){
+  console.log ('Server is running')
+})
